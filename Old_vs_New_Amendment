@@ -1,0 +1,128 @@
+#python3- m pip install-- user virtualenv
+
+class OldRegime:
+  def __init__(self, income):
+    self.income = income
+    self.tax = 0
+
+  def calculate_less_than_250000(self, income):
+    self.tax += income * 0
+    return self.tax
+
+  def calculate_less_than_500000(self, income):
+    self.tax += self.calculate_less_than_250000(250000)
+    self.tax += (income - 250000) * 0.05
+    return self.tax
+
+  def calculate_less_than_1000000(self, income):
+    self.tax += self.calculate_less_than_500000(500000)
+    self.tax += 12500 + ((income - 500000) * 0.2)
+    return self.tax
+
+  def calculate_greater_than_1000000(self, income):
+    self.tax += self.calculate_less_than_1000000(1000000)
+    self.tax += 112500 + ((income - 1000000) * 0.3)
+    return self.tax
+
+  def calculate_cess(self):
+    return self.calculate_tax() * 1.04
+
+  def calculate_tax(self):
+    if self.income <= 250000:
+      return 0
+    elif self.income <= 500000:
+      return self.calculate_less_than_500000(self.income)
+    elif self.income <= 1000000:
+      return self.calculate_less_than_1000000(self.income)
+    else:
+      return self.calculate_greater_than_1000000(self.income)
+
+
+ class NewRegime:
+  def __init__(self, income):
+      self.income = income
+      self.tax = 0
+
+  def calculate_less_than_250000(self, income):
+      self.tax += income * 0
+      return self.tax
+
+  def calculate_less_than_500000(self, income):
+      self.tax += self.calculate_less_than_250000(250000)
+      self.tax += (income - 250000) * 0.05
+      return self.tax
+
+  def calculate_less_than_750000(self, income):
+      self.tax += self.calculate_less_than_500000(500000)
+      self.tax += 12500 + ((income - 500000) * 0.10)
+      return self.tax
+
+  def calculate_less_than_1000000(self, income):
+      self.tax += self.calculate_less_than_750000(750000)
+      self.tax += 37500 + ((income - 750000) * 0.20)
+      return self.tax
+
+  def calculate_greater_than_1000000(self, income):
+      self.tax += self.calculate_less_than_1000000(1000000)
+      self.tax += 87500 + ((income - 1000000) * 0.30)
+      return self.tax
+
+
+  def calculate_cess(self):
+    return self.calculate_tax() * 1.04
+
+  def calculate_tax(self):
+    if self.income <= 250000:
+      return 0
+    elif self.income <= 500000:
+      return self.calculate_less_than_500000(self.income)
+     elif self.income <= 750000:
+      return self.calculate_less_than_750000(self.income)
+    elif self.income <= 1000000:
+      return self.calculate_less_than_1000000(self.income)
+    else:
+      return self.calculate_greater_than_1000000(self.income)
+
+
+  def compare_and_calculate(income, deduction):
+   old_tax = 0
+   new_tax = 0
+   taxable_income_old = 0
+   taxable_income_new = 0
+
+  if income <= 250000:
+    old_tax = 0
+  else taxable_income_old = income - deduction - 50000
+
+  #Old Regime
+  OR = OldRegime(taxable_income_old)
+  if taxable_income_old <= 250000:
+    old_tax = 0
+  else:
+    old_tax = OR.calculate_cess()
+
+
+  #New Regime
+  NR = NewRegime(taxable_income_new)
+  if taxable_income_new <= 250000:
+    new_tax = 0
+  else:
+    new_tax = NR.calculate_cess()
+
+  return old_tax, new_tax
+
+
+  if __name__ == "__main__":
+    income = int(input("Enter your Income : "))
+    deduction = int(input("Enter your deduction : "))
+
+    old_tax, new_tax = compare_and_calculate(income, deduction)
+
+    print(f"Old Tax = {old_tax}")
+    print(f"New Tax = {new_tax}")
+    if new_tax < old_tax:
+      print(f"Choose New Tax Regime")
+      print(f"Benefit is : {old_tax - new_tax}")
+    else:
+      print(f"Choose Old Tax Regime")
+      print(f"Benefit is : {new_tax - old_tax}")
