@@ -1,0 +1,126 @@
+!pip install flask_ngrok
+
+from flask import Flask, render_template_string, request
+from flask_ngrok import run_with_ngrok  # Will work once installed
+
+# Changed Flask(Taxi) to Flask(__name__)
+app = Flask(__name__)
+run_with_ngrok(app)
+
+# 🧾 Basic HTML Template with Form
+html_template = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sexy Tax Calculator</title>
+</head>
+<body>
+    <h1>👋 Welcome to the Sexy Tax Calculator</h1>
+    <form method="post" action="/result">
+        <label>Name:</label><br>
+        <input type="text" name="name"><br><br>
+
+        <label>PAN:</label><br>
+        <input type="text" name="pan"><br><br>
+
+        <label>Age Group:</label><br>
+        <select name="age_group">
+            <option value="below60">Below 60</option>
+            <option value="60-80">60 to 80</option>
+            <option value="above80">Above 80</option>
+        </select><br><br>
+
+        <label>Residential Status:</label><br>
+        <select name="residential_status">
+            <option value="Resident">Resident</option>
+            <option value="NRI">Non-Resident</option>
+            <option value="RNOR">RNOR</option>
+        </select><br><br>
+
+        <label>Total Income (₹):</label><br>
+        <input type="number" name="total_income"><br><br>
+
+        <label>Capital Gains?</label>
+        <input type="checkbox" name="capital_gains"><br>
+
+        <label>House Property Count:</label><br>
+        <input type="number" name="house_property_count" value="1"><br><br>
+
+        <label>Foreign Assets?</label>
+        <input type="checkbox" name="foreign_assets"><br>
+
+        <label>Agriculture Income (₹):</label><br>
+        <input type="number" name="agriculture_income" value="0"><br><br>
+
+        <label>Business Income?</label>
+        <input type="checkbox" name="business_income"><br><br>
+
+        <button type="submit">Check ITR Eligibility</button>
+    </form>
+</body>
+</html>
+"""
+
+# 🔍 ITR-1 Eligibility Logic
+def is_eligible_for_itr1(data):
+    result = {
+        "ITR_Type": None,
+        "Eligible": False,
+        "Reasons": []
+    }
+
+    income = int(data.get('total_income', 0))
+    has_capital_gains = 'capital_gains' in data
+    house_properties = int(data.get('house_property_count', 1))
+    has_foreign_assets = 'foreign_assets' in data
+    agriculture_income = int(data.get('agriculture_income', 0))
+    has_business_income = 'business_income' in data
+    is_resident = data.get('residential_status', '').lower() == 'resident'
+
+    if not is_resident:
+        result["Reasons"].append("Non-resident individuals are not eligible for ITR-1")
+    if income > 5000000:
+        result["Reasons"].append("Total income exceeds ₹50 lakh")
+    if house_properties > 1:
+        result["Reasons"].append("More than one house property not allowed in ITR-1")
+    if has_capital_gains:
+        result["Reasons"].append("Capital gains not allowed in ITR-1")
+    if has_foreign_assets:
+        result["Reasons"].append("Foreign income/assets not allowed in ITR-1")
+    if agriculture_income > 5000:
+        result["Reasons"].append("Agriculture income exceeds ₹5,000")
+    if has_business_income:
+        result["Reasons"].append("Business or professional income not allowed")
+
+    if not result["Reasons"]:
+        result["Eligible"] = True
+        result["ITR_Type"] = "ITR-1"
+    else:
+        result["ITR_Type"] = "ITR-2" if not has_business_income else "Not Eligible"
+
+    return result
+
+# 🛣️ Flask Routes
+@app.route("/", methods=["GET"])
+def home():
+    return render_template_string(html_template)
+
+@app.route("/result", methods=["POST"])
+def result():
+    form_data = request.form.to_dict()
+    result = is_eligible_for_itr1(form_data)
+
+    return f"""
+    <h2>Eligibility Result</h2>
+    <p><strong>Name:</strong> {form_data.get('name')}</p>
+    <p><strong>ITR Type:</strong> {result['ITR_Type']}</p>
+    <p><strong>Eligible:</strong> {result['Eligible']}</p>
+    <p><strong>Reasons (if any):</strong></p>
+    <ul>
+        {''.join([f"<li>{r}</li>" for r in result['Reasons']])}
+    </ul>
+    <a href="/">🔙 Go back</a>
+    """
+
+# ▶️ Run the app
+app.run()
